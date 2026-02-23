@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<title>SALADA DE FRUTAS</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #f4f6f9;
+    text-align: center;
+    padding: 30px;
+}
+
+.box {
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    width: 500px;
+    margin: auto;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.letra {
+    font-size: 60px;
+    font-weight: bold;
+    margin: 20px;
+}
+
+input, button, select {
+    padding: 8px;
+    margin: 5px;
+}
+
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+th, td {
+    border: 1px solid #ccc;
+    padding: 6px;
+}
+
+button {
+    cursor: pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>🎮 CRED FRUTAS</h1>
+
+<h3>Letra Atual</h3>
+<div class="letra" id="letraAtual">-</div>
+<button onclick="gerarLetra()">Gerar Nova Letra</button>
+
+<hr>
+
+<h3>Cadastrar Jogador</h3>
+<input type="text" id="nomeJogador" placeholder="Nome do jogador">
+<button onclick="cadastrarJogador()">Cadastrar</button>
+
+<hr>
+
+<h3>Adicionar Pontuação</h3>
+<select id="listaJogadores"></select>
+<input type="number" id="pontuacao" placeholder="Pontos">
+<button onclick="adicionarPontos()">Adicionar</button>
+
+<hr>
+
+<h3>🏆 Ranking</h3>
+<table>
+    <thead>
+        <tr>
+            <th>Jogador</th>
+            <th>Pontuação Total</th>
+            <th>Ação</th>
+        </tr>
+    </thead>
+    <tbody id="ranking"></tbody>
+</table>
+
+<br>
+<button onclick="reiniciarJogo()" style="background:red;color:white;">
+🔄 Reiniciar Jogo
+</button>
+
+</div>
+
+<script>
+
+let letras = JSON.parse(localStorage.getItem("letras")) || 
+             "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+let jogadores = JSON.parse(localStorage.getItem("jogadores")) || [];
+let letraAtual = localStorage.getItem("letraAtual") || null;
+
+function salvarLocal() {
+    localStorage.setItem("letras", JSON.stringify(letras));
+    localStorage.setItem("jogadores", JSON.stringify(jogadores));
+    localStorage.setItem("letraAtual", letraAtual);
+}
+
+function gerarLetra() {
+    if (letras.length === 0) {
+        alert("Todas as letras já foram usadas!");
+        return;
+    }
+
+    const index = Math.floor(Math.random() * letras.length);
+    letraAtual = letras.splice(index, 1)[0];
+
+    document.getElementById("letraAtual").innerText = letraAtual;
+    salvarLocal();
+}
+
+function cadastrarJogador() {
+    const nome = document.getElementById("nomeJogador").value.trim();
+    if (!nome) return alert("Digite um nome!");
+
+    jogadores.push({ nome: nome, pontos: 0 });
+
+    atualizarJogadores();
+    atualizarRanking();
+    salvarLocal();
+
+    document.getElementById("nomeJogador").value = "";
+}
+
+function atualizarJogadores() {
+    const select = document.getElementById("listaJogadores");
+    select.innerHTML = "";
+
+    jogadores.forEach((j, index) => {
+        const option = document.createElement("option");
+        option.value = index;
+        option.text = j.nome;
+        select.appendChild(option);
+    });
+}
+
+function adicionarPontos() {
+    const jogadorIndex = document.getElementById("listaJogadores").value;
+    const pontos = parseInt(document.getElementById("pontuacao").value);
+
+    if (!letraAtual) return alert("Gere uma letra primeiro!");
+    if (isNaN(pontos)) return alert("Digite um valor válido!");
+
+    jogadores[jogadorIndex].pontos += pontos;
+
+    atualizarRanking();
+    salvarLocal();
+
+    document.getElementById("pontuacao").value = "";
+}
+
+function atualizarRanking() {
+    const tbody = document.getElementById("ranking");
+    tbody.innerHTML = "";
+
+    jogadores.sort((a, b) => b.pontos - a.pontos);
+
+    jogadores.forEach((j, index) => {
+        const row = `
+        <tr>
+            <td>${j.nome}</td>
+            <td>${j.pontos}</td>
+            <td>
+                <button onclick="excluirJogador(${index})" 
+                        style="background:red;color:white;">
+                    Excluir
+                </button>
+            </td>
+        </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+function excluirJogador(index) {
+
+    if (!confirm("Deseja realmente excluir este jogador?")) return;
+
+    jogadores.splice(index, 1);
+
+    salvarLocal();
+    atualizarJogadores();
+    atualizarRanking();
+}
+
+function reiniciarJogo() {
+
+    if (!confirm("Tem certeza que deseja reiniciar o jogo?")) return;
+
+    letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    jogadores.forEach(j => j.pontos = 0);
+    letraAtual = null;
+
+    document.getElementById("letraAtual").innerText = "-";
+
+    salvarLocal();
+    atualizarRanking();
+
+    alert("Jogo reiniciado com sucesso!");
+}
+
+// Inicialização
+if (letraAtual) {
+    document.getElementById("letraAtual").innerText = letraAtual;
+}
+
+atualizarJogadores();
+atualizarRanking();
+
+</script>
+
+</body>
+</html>
