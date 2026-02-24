@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
 <meta charset="UTF-8">
-<title>SALADA DE FRUTAS</title>
+<title>Jogo da Letra</title>
 
 <style>
 body {
@@ -53,7 +53,7 @@ button {
 
 <div class="box">
 
-<h1>🎮 CRED FRUTAS</h1>
+<h1>🎮 Jogo da Letra</h1>
 
 <h3>Letra Atual</h3>
 <div class="letra" id="letraAtual">-</div>
@@ -101,11 +101,13 @@ let letras = JSON.parse(localStorage.getItem("letras")) ||
 let jogadores = JSON.parse(localStorage.getItem("jogadores")) || [];
 let letraAtual = localStorage.getItem("letraAtual") || null;
 
+
 function salvarLocal() {
     localStorage.setItem("letras", JSON.stringify(letras));
     localStorage.setItem("jogadores", JSON.stringify(jogadores));
     localStorage.setItem("letraAtual", letraAtual);
 }
+
 
 function gerarLetra() {
     if (letras.length === 0) {
@@ -124,7 +126,11 @@ function cadastrarJogador() {
     const nome = document.getElementById("nomeJogador").value.trim();
     if (!nome) return alert("Digite um nome!");
 
-    jogadores.push({ nome: nome, pontos: 0 });
+    jogadores.push({ 
+        id: Date.now(), // ID único fixo
+        nome: nome, 
+        pontos: 0 
+    });
 
     atualizarJogadores();
     atualizarRanking();
@@ -133,26 +139,33 @@ function cadastrarJogador() {
     document.getElementById("nomeJogador").value = "";
 }
 
+
+
 function atualizarJogadores() {
     const select = document.getElementById("listaJogadores");
     select.innerHTML = "";
 
-    jogadores.forEach((j, index) => {
+    jogadores.forEach(j => {
         const option = document.createElement("option");
-        option.value = index;
+        option.value = j.id;
         option.text = j.nome;
         select.appendChild(option);
     });
 }
 
+
 function adicionarPontos() {
-    const jogadorIndex = document.getElementById("listaJogadores").value;
+    const jogadorId = parseInt(document.getElementById("listaJogadores").value);
     const pontos = parseInt(document.getElementById("pontuacao").value);
 
     if (!letraAtual) return alert("Gere uma letra primeiro!");
     if (isNaN(pontos)) return alert("Digite um valor válido!");
 
-    jogadores[jogadorIndex].pontos += pontos;
+    const jogador = jogadores.find(j => j.id === jogadorId);
+
+    if (jogador) {
+        jogador.pontos += pontos;
+    }
 
     atualizarRanking();
     salvarLocal();
@@ -164,15 +177,16 @@ function atualizarRanking() {
     const tbody = document.getElementById("ranking");
     tbody.innerHTML = "";
 
-    jogadores.sort((a, b) => b.pontos - a.pontos);
+    // cria cópia ordenada (não altera array original)
+    const rankingOrdenado = [...jogadores].sort((a, b) => b.pontos - a.pontos);
 
-    jogadores.forEach((j, index) => {
+    rankingOrdenado.forEach(j => {
         const row = `
         <tr>
             <td>${j.nome}</td>
             <td>${j.pontos}</td>
             <td>
-                <button onclick="excluirJogador(${index})" 
+                <button onclick="excluirJogador(${j.id})" 
                         style="background:red;color:white;">
                     Excluir
                 </button>
@@ -183,11 +197,12 @@ function atualizarRanking() {
     });
 }
 
-function excluirJogador(index) {
+
+function excluirJogador(id) {
 
     if (!confirm("Deseja realmente excluir este jogador?")) return;
 
-    jogadores.splice(index, 1);
+    jogadores = jogadores.filter(j => j.id !== id);
 
     salvarLocal();
     atualizarJogadores();
@@ -210,7 +225,7 @@ function reiniciarJogo() {
     alert("Jogo reiniciado com sucesso!");
 }
 
-// Inicialização
+
 if (letraAtual) {
     document.getElementById("letraAtual").innerText = letraAtual;
 }
